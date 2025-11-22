@@ -1,0 +1,59 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" 
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+  name  String?
+  password String
+  
+  messages Message[]
+  groups GroupParticipant[]
+
+  @@map("users")
+}
+
+model ChatGroup {
+  id   String @id @default(cuid())
+  name String
+  createdAt DateTime @default(now())
+
+  messages Message[]
+  participants GroupParticipant[]
+
+  @@map("chat_groups")
+}
+
+model GroupParticipant {
+  userId  String
+  groupId String
+  joinedAt DateTime @default(now())
+  
+  user    User @relation(fields: [userId], references: [id])
+  group   ChatGroup @relation(fields: [groupId], references: [id])
+
+  @@id([userId, groupId])
+  @@map("group_participants")
+}
+
+model Message {
+  id      String @id @default(cuid())
+  content String
+  createdAt DateTime @default(now())
+
+  senderId String
+  groupId  String
+
+  sender  User @relation(fields: [senderId], references: [id])
+  group   ChatGroup @relation(fields: [groupId], references: [id])
+
+  @@index([groupId])
+  @@map("messages")
+}
